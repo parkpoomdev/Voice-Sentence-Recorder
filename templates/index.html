@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Sentence Recorder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a1a2e;
+            --secondary: #16213e;
+            --accent: #0f3460;
+            --highlight: #e94560;
+            --success: #00d9a5;
+            --text: #eaeaea;
+            --text-muted: #8b8b9e;
+            --card-bg: #1f1f3d;
+            --card-border: #2a2a4a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
+            min-height: 100vh;
+            color: var(--text);
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 32px 0;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--text) 0%, var(--success) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .input-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 32px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .input-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 16px;
+            border: 2px solid var(--card-border);
+            border-radius: 12px;
+            background: var(--primary);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--success);
+            box-shadow: 0 0 0 4px rgba(0, 217, 165, 0.15);
+        }
+
+        textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--success) 0%, #00b894 100%);
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 217, 165, 0.35);
+        }
+
+        .btn-secondary {
+            background: var(--accent);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background: #1a4a7a;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--highlight) 0%, #c73e54 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 8px 24px rgba(233, 69, 96, 0.35);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .cards-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .sentence-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sentence-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--card-border);
+            transition: background 0.3s;
+        }
+
+        .sentence-card.recorded::before {
+            background: linear-gradient(90deg, var(--success), #00b894);
+        }
+
+        .sentence-card.recording::before {
+            background: var(--highlight);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .sentence-number {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: var(--accent);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .sentence-text {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: var(--text);
+            margin: 8px 0 20px;
+            padding-right: 50px;
+            word-wrap: break-word;
+        }
+
+        .card-controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-controls .btn {
+            flex: 1;
+            min-width: 80px;
+            justify-content: center;
+            padding: 10px 16px;
+            font-size: 0.85rem;
+        }
+
+        .card-player {
+            margin: 12px 0;
+            padding: 12px;
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            background: var(--primary);
+        }
+
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .time-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            min-width: 110px;
+            text-align: right;
+        }
+
+        .trim-row {
+            margin-top: 0;
+        }
+
+        .wave-wrap {
+            position: relative;
+            height: 82px;
+            display: flex;
+            align-items: center;
+            user-select: none;
+        }
+
+        .wave-canvas {
+            position: absolute;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 82px;
+            border-radius: 8px;
+            background: #121a2e;
+        }
+
+        .trim-selected {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            border-radius: 8px;
+            background: rgba(233, 69, 96, 0.2);
+            border: 1px solid rgba(233, 69, 96, 0.35);
+            left: 0;
+            width: 0;
+            pointer-events: none;
+        }
+
+        .playhead {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(0, 217, 165, 0.7);
+            pointer-events: none;
+            left: 0;
+        }
+
+        .trim-handle {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 38px;
+            border-radius: 2px;
+            border: 1px solid var(--card-bg);
+            background: var(--highlight);
+            cursor: ew-resize;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+            z-index: 3;
+        }
+
+        .trim-times {
+            margin-top: 6px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn-record {
+            background: linear-gradient(135deg, var(--highlight) 0%, #c73e54 100%);
+            color: white;
+        }
+
+        .btn-record:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .btn-record.recording {
+            animation: recordPulse 0.8s infinite;
+        }
+
+        @keyframes recordPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, var(--success) 0%, #00b894 100%);
+            color: var(--primary);
+        }
+
+        .btn-play:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(0, 217, 165, 0.4);
+        }
+
+        .btn-reset {
+            background: var(--accent);
+            color: var(--text-muted);
+        }
+
+        .btn-reset:hover:not(:disabled) {
+            background: #1a4a7a;
+            color: var(--text);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            margin-right: 8px;
+        }
+
+        .status-indicator.recorded {
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .export-section {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .export-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .export-buttons .btn {
+            flex: 1;
+            min-width: 180px;
+            justify-content: center;
+        }
+
+        .export-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border: 1px solid var(--card-border);
+        }
+
+        .export-label {
+            flex: 1;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .btn-preview {
+            background: var(--accent);
+            color: var(--text);
+        }
+
+        .btn-preview:hover {
+            background: #1a4a7a;
+            transform: scale(1.05);
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, var(--success) 0%, #00b894 100%);
+            color: var(--primary);
+        }
+
+        .btn-download:hover {
+            box-shadow: 0 4px 12px rgba(0, 217, 165, 0.35);
+            transform: scale(1.05);
+        }
+
+        .preview-panel {
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            background: var(--primary);
+        }
+
+        .preview-controls {
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .preview-controls .btn {
+            min-width: 90px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 46, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--card-border);
+            border-top-color: var(--success);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 1.75rem;
+            }
+
+            .cards-section {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+            }
+
+            .btn-group .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .export-buttons {
+                flex-direction: column;
+            }
+
+            .export-buttons .btn {
+                width: 100%;
+            }
+
+            .export-row {
+                width: 100%;
+            }
+
+            .btn-icon {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+            }
+
+            .preview-controls {
+                flex-wrap: wrap;
+            }
+
+            .preview-controls .btn {
+                flex: 1;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Voice Sentence Recorder</h1>
+            <p>Split text, record each sentence, and export audio files</p>
+        </header>
+
+        <section class="input-section">
+            <label for="textInput">Enter your text</label>
+            <textarea id="textInput" placeholder="Enter or paste your text here... The app will split it into sentences automatically."></textarea>
+            <div class="btn-group">
+                <button class="btn btn-primary" id="splitBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M4 6h16M4 12h16M4 18h10"/>
+                    </svg>
+                    Split Text
+                </button>
+                <button class="btn btn-secondary" id="clearBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"/>
+                    </svg>
+                    Clear All
+                </button>
+            </div>
+        </section>
+
+        <div id="cardsSection">
+            <div class="empty-state" id="emptyState">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/>
+                </svg>
+                <p>Enter text above and click "Split Text" to get started</p>
+            </div>
+            <div class="cards-section hidden" id="cardsContainer"></div>
+        </div>
+
+        <section class="export-section hidden" id="exportSection">
+            <h2>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                </svg>
+                Export Audio
+            </h2>
+            <div class="export-buttons">
+                <button class="btn btn-primary" id="exportIndividual">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/>
+                        <polyline points="13 2 13 9 20 9"/>
+                    </svg>
+                    Individual Files (ZIP)
+                </button>
+                <div class="export-row">
+                    <span class="export-label">Combined (1s gap)</span>
+                    <button class="btn-icon btn-preview" onclick="previewCombined(1.0)" title="Preview">▶</button>
+                    <button class="btn-icon btn-download" onclick="exportCombined(1.0)" title="Download">↓</button>
+                </div>
+                <div class="export-row">
+                    <span class="export-label">Combined (0.8s gap)</span>
+                    <button class="btn-icon btn-preview" onclick="previewCombined(0.8)" title="Preview">▶</button>
+                    <button class="btn-icon btn-download" onclick="exportCombined(0.8)" title="Download">↓</button>
+                </div>
+                <div class="export-row">
+                    <span class="export-label">Combined (0.5s gap)</span>
+                    <button class="btn-icon btn-preview" onclick="previewCombined(0.5)" title="Preview">▶</button>
+                    <button class="btn-icon btn-download" onclick="exportCombined(0.5)" title="Download">↓</button>
+                </div>
+                <div class="export-row">
+                    <span class="export-label">Play All (no gap)</span>
+                    <button class="btn-icon btn-preview" onclick="previewCombined(0)" title="Preview">▶</button>
+                    <button class="btn-icon btn-download" onclick="exportCombined(0)" title="Download">↓</button>
+                </div>
+                <button class="btn btn-danger" id="exportAll">
+                    Export All to Folder
+                </button>
+                <div class="preview-panel hidden" id="previewPanel">
+                    <div class="timeline-row">
+                        <input type="range" id="previewSeek" class="timeline-slider" min="0" max="0" step="0.01" value="0">
+                        <span class="time-text" id="previewTime">0:00 / 0:00</span>
+                    </div>
+                    <div class="preview-controls">
+                        <button class="btn btn-play" id="previewPlayBtn">Play</button>
+                        <button class="btn btn-secondary" id="previewPauseBtn">Pause</button>
+                        <button class="btn btn-reset" id="previewStopBtn">Stop</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        let sentences = [];
+        let audioData = {};
+        let audioMeta = {};
+        let trimBounds = {};
+        let cardPlayers = {};
+        let waveformPeaks = {};
+        let dragState = null;
+        let recordingMonitor = null;
+        let previewAudio = null;
+        let previewAudioUrl = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let currentRecordingIndex = null;
+
+        const textInput = document.getElementById('textInput');
+        const splitBtn = document.getElementById('splitBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const cardsContainer = document.getElementById('cardsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const exportSection = document.getElementById('exportSection');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const previewPanel = document.getElementById('previewPanel');
+        const previewSeek = document.getElementById('previewSeek');
+        const previewTime = document.getElementById('previewTime');
+        const previewPlayBtn = document.getElementById('previewPlayBtn');
+        const previewPauseBtn = document.getElementById('previewPauseBtn');
+        const previewStopBtn = document.getElementById('previewStopBtn');
+
+        splitBtn.addEventListener('click', async () => {
+            const text = textInput.value.trim();
+            if (!text) return;
+
+            showLoading(true);
+            try {
+                const response = await fetch('/api/split', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text })
+                });
+                const data = await response.json();
+                sentences = data.sentences;
+                audioData = {};
+                audioMeta = {};
+                trimBounds = {};
+                cardPlayers = {};
+                waveformPeaks = {};
+                renderCards();
+            } catch (error) {
+                console.error('Error splitting text:', error);
+            }
+            showLoading(false);
+        });
+
+        clearBtn.addEventListener('click', () => {
+            textInput.value = '';
+            sentences = [];
+            audioData = {};
+            audioMeta = {};
+            trimBounds = {};
+            cardPlayers = {};
+            waveformPeaks = {};
+            renderCards();
+        });
+
+        function renderCards() {
+            if (sentences.length === 0) {
+                cardsContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                exportSection.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            cardsContainer.classList.remove('hidden');
+            exportSection.classList.remove('hidden');
+
+            cardsContainer.innerHTML = sentences.map((sentence, index) => `
+                <div class="sentence-card ${audioData[index] ? 'recorded' : ''}" id="card-${index}">
+                    <span class="sentence-number">${index + 1}</span>
+                    <p class="sentence-text">${sentence}</p>
+                    <div class="card-player">
+                        <div class="timeline-row">
+                            <span class="time-text" id="time-${index}">0:00 / 0:00</span>
+                        </div>
+                        <div class="trim-row">
+                            <div class="wave-wrap" id="wave-wrap-${index}">
+                                <canvas class="wave-canvas" id="wave-${index}"></canvas>
+                                <div class="trim-selected" id="trim-selected-${index}"></div>
+                                <div class="playhead" id="playhead-${index}"></div>
+                                <div class="trim-handle" id="trim-start-${index}" ${!audioData[index] ? 'data-disabled="1"' : ''}></div>
+                                <div class="trim-handle" id="trim-end-${index}" ${!audioData[index] ? 'data-disabled="1"' : ''}></div>
+                            </div>
+                            <div class="trim-times">
+                                <span id="trim-start-label-${index}">0:00</span>
+                                <span id="trim-end-label-${index}">0:00</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-controls">
+                        <button class="btn btn-record" onclick="toggleRecording(${index})" id="record-${index}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <circle cx="12" cy="12" r="8"/>
+                            </svg>
+                            Record
+                        </button>
+                        <button class="btn btn-play" onclick="playAudio(${index})" id="play-${index}" ${!audioData[index] ? 'disabled' : ''}>
+                            Play
+                        </button>
+                        <button class="btn btn-secondary" onclick="stopAudio(${index})" id="stop-${index}" ${!audioData[index] ? 'disabled' : ''}>Stop</button>
+                        <button class="btn btn-reset" onclick="resetAudio(${index})" ${!audioData[index] ? 'disabled' : ''}>
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            sentences.forEach((_, index) => {
+                attachCardEvents(index);
+                if (audioData[index]) {
+                    syncCardPlayer(index);
+                }
+            });
+        }
+
+        function formatTime(seconds) {
+            if (!Number.isFinite(seconds) || seconds < 0) {
+                return '0:00';
+            }
+            const min = Math.floor(seconds / 60);
+            const sec = Math.floor(seconds % 60);
+            return `${min}:${String(sec).padStart(2, '0')}`;
+        }
+
+        async function getAudioDuration(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const audio = new Audio(dataUrl);
+                audio.addEventListener('loadedmetadata', () => {
+                    resolve(audio.duration || 0);
+                });
+                audio.addEventListener('error', reject);
+            });
+        }
+
+        function attachCardEvents(index) {
+            const waveWrap = document.getElementById(`wave-wrap-${index}`);
+            const startHandle = document.getElementById(`trim-start-${index}`);
+            const endHandle = document.getElementById(`trim-end-${index}`);
+
+            if (!waveWrap || !startHandle || !endHandle) {
+                return;
+            }
+
+            if (startHandle.dataset.bound !== '1') {
+                startHandle.dataset.bound = '1';
+                startHandle.addEventListener('pointerdown', (event) => {
+                    if (startHandle.dataset.disabled === '1') {
+                        return;
+                    }
+                    event.preventDefault();
+                    dragState = { index, type: 'start' };
+                });
+            }
+
+            if (endHandle.dataset.bound !== '1') {
+                endHandle.dataset.bound = '1';
+                endHandle.addEventListener('pointerdown', (event) => {
+                    if (endHandle.dataset.disabled === '1') {
+                        return;
+                    }
+                    event.preventDefault();
+                    dragState = { index, type: 'end' };
+                });
+            }
+
+            if (waveWrap.dataset.bound !== '1') {
+                waveWrap.dataset.bound = '1';
+                waveWrap.addEventListener('click', (event) => {
+                    if (dragState) {
+                        return;
+                    }
+                    const player = cardPlayers[index];
+                    const duration = audioMeta[index]?.duration || 0;
+                    if (!player || duration <= 0) {
+                        return;
+                    }
+                    const trim = trimBounds[index] || { start: 0, end: duration };
+                    const target = xToTime(index, event.clientX);
+                    const seek = Math.max(trim.start, Math.min(trim.end, target));
+                    player.currentTime = seek;
+                    updateCardTime(index);
+                });
+            }
+
+            ensureWaveListeners();
+        }
+
+        function ensureWaveListeners() {
+            if (window.__waveListenersAttached === true) {
+                return;
+            }
+
+            window.__waveListenersAttached = true;
+
+            document.addEventListener('pointermove', (event) => {
+                if (!dragState) {
+                    return;
+                }
+
+                const { index, type } = dragState;
+                const duration = audioMeta[index]?.duration || 0;
+                if (duration <= 0) {
+                    return;
+                }
+
+                const nextValue = xToTime(index, event.clientX);
+                const current = trimBounds[index] || { start: 0, end: duration };
+
+                if (type === 'start') {
+                    updateTrim(index, nextValue, current.end);
+                } else {
+                    updateTrim(index, current.start, nextValue);
+                }
+            });
+
+            document.addEventListener('pointerup', () => {
+                dragState = null;
+            });
+        }
+
+        function xToTime(index, clientX) {
+            const waveWrap = document.getElementById(`wave-wrap-${index}`);
+            const duration = audioMeta[index]?.duration || 0;
+            if (!waveWrap || duration <= 0) {
+                return 0;
+            }
+
+            const rect = waveWrap.getBoundingClientRect();
+            const ratio = (clientX - rect.left) / rect.width;
+            const clamped = Math.max(0, Math.min(1, ratio));
+            return clamped * duration;
+        }
+
+        async function computeWaveformPeaks(index) {
+            if (!audioData[index]) {
+                return;
+            }
+
+            try {
+                const response = await fetch(audioData[index]);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioContext = new AudioContext();
+                const buffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+                const channel = buffer.getChannelData(0);
+                const points = 220;
+                const step = Math.max(1, Math.floor(channel.length / points));
+                const peaks = [];
+
+                for (let i = 0; i < points; i++) {
+                    let peak = 0;
+                    const start = i * step;
+                    const end = Math.min(channel.length, start + step);
+                    for (let j = start; j < end; j++) {
+                        const value = Math.abs(channel[j]);
+                        if (value > peak) {
+                            peak = value;
+                        }
+                    }
+                    peaks.push(peak);
+                }
+
+                waveformPeaks[index] = peaks;
+                await audioContext.close();
+            } catch (error) {
+                waveformPeaks[index] = [];
+            }
+        }
+
+        function drawWaveform(index) {
+            const canvas = document.getElementById(`wave-${index}`);
+            const waveWrap = document.getElementById(`wave-wrap-${index}`);
+            if (!canvas || !waveWrap) {
+                return;
+            }
+
+            const peaks = waveformPeaks[index] || [];
+            const width = Math.max(1, waveWrap.clientWidth);
+            const height = Math.max(1, waveWrap.clientHeight);
+            const dpr = window.devicePixelRatio || 1;
+
+            canvas.width = Math.floor(width * dpr);
+            canvas.height = Math.floor(height * dpr);
+
+            const ctx = canvas.getContext('2d');
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            ctx.clearRect(0, 0, width, height);
+
+            const midY = height / 2;
+            const duration = audioMeta[index]?.duration || 0;
+            const trim = trimBounds[index] || { start: 0, end: duration };
+
+            if (peaks.length === 0) {
+                ctx.strokeStyle = 'rgba(120, 130, 160, 0.55)';
+                ctx.beginPath();
+                ctx.moveTo(0, midY);
+                ctx.lineTo(width, midY);
+                ctx.stroke();
+                return;
+            }
+
+            const barWidth = width / peaks.length;
+            for (let i = 0; i < peaks.length; i++) {
+                const x = i * barWidth;
+                const amplitude = Math.max(1.5, peaks[i] * (height * 0.45));
+                const timeAtBar = duration > 0 ? (i / peaks.length) * duration : 0;
+                const inTrim = timeAtBar >= trim.start && timeAtBar <= trim.end;
+
+                ctx.strokeStyle = inTrim ? 'rgba(0, 217, 165, 0.95)' : 'rgba(130, 145, 180, 0.35)';
+                ctx.lineWidth = Math.max(1, barWidth * 0.65);
+                ctx.beginPath();
+                ctx.moveTo(x + barWidth / 2, midY - amplitude / 2);
+                ctx.lineTo(x + barWidth / 2, midY + amplitude / 2);
+                ctx.stroke();
+            }
+        }
+
+        function startRecordingMonitor(stream, index) {
+            stopRecordingMonitor();
+
+            const waveWrap = document.getElementById(`wave-wrap-${index}`);
+            const canvas = document.getElementById(`wave-${index}`);
+            if (!waveWrap || !canvas) {
+                return;
+            }
+
+            const context = new AudioContext();
+            const analyser = context.createAnalyser();
+            analyser.fftSize = 1024;
+            const source = context.createMediaStreamSource(stream);
+            source.connect(analyser);
+            const data = new Uint8Array(analyser.fftSize);
+
+            recordingMonitor = {
+                index,
+                context,
+                analyser,
+                data,
+                raf: null
+            };
+
+            const drawLive = () => {
+                if (!recordingMonitor || recordingMonitor.index !== index) {
+                    return;
+                }
+
+                const width = Math.max(1, waveWrap.clientWidth);
+                const height = Math.max(1, waveWrap.clientHeight);
+                const dpr = window.devicePixelRatio || 1;
+                canvas.width = Math.floor(width * dpr);
+                canvas.height = Math.floor(height * dpr);
+                const ctx = canvas.getContext('2d');
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+                analyser.getByteTimeDomainData(data);
+
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillStyle = '#121a2e';
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = 'rgba(0, 217, 165, 0.95)';
+                ctx.beginPath();
+
+                const step = Math.max(1, Math.floor(data.length / width));
+                let x = 0;
+                for (let i = 0; i < data.length; i += step) {
+                    const y = (data[i] / 255) * height;
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                    x += 1;
+                    if (x > width) {
+                        break;
+                    }
+                }
+                ctx.stroke();
+
+                recordingMonitor.raf = requestAnimationFrame(drawLive);
+            };
+
+            drawLive();
+        }
+
+        function stopRecordingMonitor() {
+            if (!recordingMonitor) {
+                return;
+            }
+
+            if (recordingMonitor.raf) {
+                cancelAnimationFrame(recordingMonitor.raf);
+            }
+
+            if (recordingMonitor.context) {
+                recordingMonitor.context.close();
+            }
+
+            recordingMonitor = null;
+        }
+
+        function updateTrim(index, nextStart, nextEnd) {
+            const startLabel = document.getElementById(`trim-start-label-${index}`);
+            const endLabel = document.getElementById(`trim-end-label-${index}`);
+            const selectedBar = document.getElementById(`trim-selected-${index}`);
+            const startHandle = document.getElementById(`trim-start-${index}`);
+            const endHandle = document.getElementById(`trim-end-${index}`);
+            const playhead = document.getElementById(`playhead-${index}`);
+            const duration = audioMeta[index]?.duration || 0;
+
+            if (duration <= 0) {
+                return;
+            }
+
+            const current = trimBounds[index] || { start: 0, end: duration };
+            let start = typeof nextStart === 'number' ? nextStart : current.start;
+            let end = typeof nextEnd === 'number' ? nextEnd : current.end;
+            const minGap = 0.05;
+
+            start = Math.max(0, Math.min(start, duration));
+            end = Math.max(0, Math.min(end, duration));
+
+            if (end - start < minGap) {
+                if (dragState && dragState.type === 'start') {
+                    start = Math.max(0, end - minGap);
+                } else {
+                    end = Math.min(duration, start + minGap);
+                }
+            }
+
+            trimBounds[index] = { start, end };
+
+            if (startLabel) {
+                startLabel.textContent = formatTime(start);
+            }
+            if (endLabel) {
+                endLabel.textContent = formatTime(end);
+            }
+
+            const leftPct = (start / duration) * 100;
+            const rightPct = (end / duration) * 100;
+
+            if (selectedBar) {
+                selectedBar.style.left = `${leftPct}%`;
+                selectedBar.style.width = `${Math.max(0, rightPct - leftPct)}%`;
+            }
+
+            if (startHandle) {
+                startHandle.style.left = `${leftPct}%`;
+            }
+            if (endHandle) {
+                endHandle.style.left = `${rightPct}%`;
+            }
+
+            const player = cardPlayers[index];
+            if (player && (player.currentTime < start || player.currentTime > end)) {
+                player.currentTime = start;
+            }
+
+            if (playhead && player) {
+                playhead.style.left = `${(player.currentTime / duration) * 100}%`;
+            }
+
+            drawWaveform(index);
+            updateCardTime(index);
+        }
+
+        async function syncCardPlayer(index) {
+            if (!audioData[index]) {
+                return;
+            }
+
+            if (!cardPlayers[index]) {
+                cardPlayers[index] = new Audio(audioData[index]);
+                cardPlayers[index].addEventListener('timeupdate', () => updateCardTime(index));
+                cardPlayers[index].addEventListener('ended', () => {
+                    const trim = trimBounds[index] || { start: 0, end: cardPlayers[index].duration || 0 };
+                    cardPlayers[index].currentTime = trim.start;
+                    updateCardTime(index);
+                });
+            } else {
+                cardPlayers[index].src = audioData[index];
+            }
+
+            const duration = audioMeta[index]?.duration || cardPlayers[index].duration || 0;
+            if (!trimBounds[index]) {
+                trimBounds[index] = { start: 0, end: duration };
+            }
+
+            const startHandle = document.getElementById(`trim-start-${index}`);
+            const endHandle = document.getElementById(`trim-end-${index}`);
+            if (startHandle) {
+                startHandle.dataset.disabled = '0';
+            }
+            if (endHandle) {
+                endHandle.dataset.disabled = '0';
+            }
+
+            if (!waveformPeaks[index]) {
+                await computeWaveformPeaks(index);
+            }
+
+            cardPlayers[index].currentTime = trimBounds[index].start;
+            updateTrim(index, trimBounds[index].start, trimBounds[index].end);
+            updateCardTime(index);
+        }
+
+        function updateCardTime(index) {
+            const player = cardPlayers[index];
+            const time = document.getElementById(`time-${index}`);
+            const playhead = document.getElementById(`playhead-${index}`);
+            const playBtn = document.getElementById(`play-${index}`);
+
+            if (!time) {
+                return;
+            }
+
+            const duration = audioMeta[index]?.duration || 0;
+            const trim = trimBounds[index] || { start: 0, end: duration };
+            const current = player ? player.currentTime : trim.start;
+            const total = Math.max(0, trim.end - trim.start);
+            const relative = Math.max(0, current - trim.start);
+
+            time.textContent = `${formatTime(relative)} / ${formatTime(total)}`;
+
+            if (player) {
+                if (player.currentTime >= trim.end) {
+                    player.pause();
+                    player.currentTime = trim.start;
+                    if (playBtn) {
+                        playBtn.textContent = 'Play';
+                    }
+                }
+                if (playhead && duration > 0) {
+                    playhead.style.left = `${(player.currentTime / duration) * 100}%`;
+                }
+                if (playBtn && !player.paused && player.currentTime < trim.end) {
+                    playBtn.textContent = 'Pause';
+                }
+            }
+        }
+
+        function audioBufferToWavBlob(audioBuffer) {
+            const channels = 1;
+            const sampleRate = 16000;
+            const offlineCtx = new OfflineAudioContext(channels, Math.ceil(audioBuffer.duration * sampleRate), sampleRate);
+            const source = offlineCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(offlineCtx.destination);
+            source.start(0);
+
+            return offlineCtx.startRendering().then((renderedBuffer) => {
+                const pcm = renderedBuffer.getChannelData(0);
+                const wavBuffer = new ArrayBuffer(44 + pcm.length * 2);
+                const view = new DataView(wavBuffer);
+
+                function writeString(offset, text) {
+                    for (let i = 0; i < text.length; i++) {
+                        view.setUint8(offset + i, text.charCodeAt(i));
+                    }
+                }
+
+                writeString(0, 'RIFF');
+                view.setUint32(4, 36 + pcm.length * 2, true);
+                writeString(8, 'WAVE');
+                writeString(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, 1, true);
+                view.setUint16(22, 1, true);
+                view.setUint32(24, sampleRate, true);
+                view.setUint32(28, sampleRate * 2, true);
+                view.setUint16(32, 2, true);
+                view.setUint16(34, 16, true);
+                writeString(36, 'data');
+                view.setUint32(40, pcm.length * 2, true);
+
+                let offset = 44;
+                for (let i = 0; i < pcm.length; i++) {
+                    const s = Math.max(-1, Math.min(1, pcm[i]));
+                    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+                    offset += 2;
+                }
+
+                return new Blob([view], { type: 'audio/wav' });
+            });
+        }
+
+        async function blobToDataUrl(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        async function toggleRecording(index) {
+            if (currentRecordingIndex === index) {
+                stopRecording();
+                return;
+            }
+
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                stopRecording();
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                const options = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                    ? { mimeType: 'audio/webm;codecs=opus' }
+                    : undefined;
+                mediaRecorder = new MediaRecorder(stream, options);
+                audioChunks = [];
+
+                delete waveformPeaks[index];
+                drawWaveform(index);
+                startRecordingMonitor(stream, index);
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    try {
+                        stopRecordingMonitor();
+                        const recordedBlob = new Blob(audioChunks, { type: mediaRecorder.mimeType || 'audio/webm' });
+                        const arrayBuffer = await recordedBlob.arrayBuffer();
+                        const audioContext = new AudioContext();
+                        const decoded = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+                        const wavBlob = await audioBufferToWavBlob(decoded);
+                        const wavDataUrl = await blobToDataUrl(wavBlob);
+                        audioData[index] = wavDataUrl;
+                        const duration = await getAudioDuration(wavDataUrl);
+                        audioMeta[index] = { duration };
+                        trimBounds[index] = { start: 0, end: duration };
+                        updateCardStatus(index, true);
+                        delete waveformPeaks[index];
+                        await computeWaveformPeaks(index);
+                        await syncCardPlayer(index);
+                        audioContext.close();
+                    } catch (error) {
+                        console.error('Error converting recording to WAV:', error);
+                        alert('Recording format conversion failed. Please try recording again.');
+                    }
+
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                currentRecordingIndex = index;
+                updateRecordingUI(index, true);
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                alert('Could not access microphone. Please grant permission.');
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+                mediaRecorder.stop();
+                stopRecordingMonitor();
+                currentRecordingIndex = null;
+                document.querySelectorAll('.sentence-card').forEach(card => {
+                    card.classList.remove('recording');
+                });
+                document.querySelectorAll('.btn-record').forEach(btn => {
+                    btn.classList.remove('recording');
+                    btn.innerHTML = `
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <circle cx="12" cy="12" r="8"/>
+                        </svg>
+                        Record`;
+                });
+            }
+        }
+
+        function updateRecordingUI(index, isRecording) {
+            const card = document.getElementById(`card-${index}`);
+            const recordBtn = document.getElementById(`record-${index}`);
+
+            if (isRecording) {
+                card.classList.add('recording');
+                recordBtn.classList.add('recording');
+                recordBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="6" width="12" height="12" rx="2"/>
+                    </svg>
+                    Stop`;
+            } else {
+                card.classList.remove('recording');
+                recordBtn.classList.remove('recording');
+                recordBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <circle cx="12" cy="12" r="8"/>
+                    </svg>
+                    Record`;
+            }
+        }
+
+        function updateCardStatus(index, hasAudio) {
+            const card = document.getElementById(`card-${index}`);
+            const playBtn = document.getElementById(`play-${index}`);
+            const stopBtn = document.getElementById(`stop-${index}`);
+            const resetBtn = card ? card.querySelector('.btn-reset') : null;
+            const trimStart = document.getElementById(`trim-start-${index}`);
+            const trimEnd = document.getElementById(`trim-end-${index}`);
+
+            if (!card || !playBtn || !stopBtn || !resetBtn) {
+                return;
+            }
+
+            if (hasAudio) {
+                card.classList.add('recorded');
+                playBtn.disabled = false;
+                playBtn.textContent = 'Play';
+                stopBtn.disabled = false;
+                resetBtn.disabled = false;
+                if (trimStart) {
+                    trimStart.dataset.disabled = '0';
+                }
+                if (trimEnd) {
+                    trimEnd.dataset.disabled = '0';
+                }
+            } else {
+                card.classList.remove('recorded');
+                playBtn.disabled = true;
+                playBtn.textContent = 'Play';
+                stopBtn.disabled = true;
+                resetBtn.disabled = true;
+                if (trimStart) {
+                    trimStart.dataset.disabled = '1';
+                }
+                if (trimEnd) {
+                    trimEnd.dataset.disabled = '1';
+                }
+            }
+        }
+
+        async function playAudio(index) {
+            if (!audioData[index]) {
+                return;
+            }
+
+            await syncCardPlayer(index);
+            const player = cardPlayers[index];
+            if (!player) {
+                return;
+            }
+            const playBtn = document.getElementById(`play-${index}`);
+            const trim = trimBounds[index] || { start: 0, end: player.duration || 0 };
+
+            if (player.paused) {
+                if (player.currentTime < trim.start || player.currentTime >= trim.end) {
+                    player.currentTime = trim.start;
+                }
+                player.play();
+                if (playBtn) {
+                    playBtn.textContent = 'Pause';
+                }
+            } else {
+                player.pause();
+                if (playBtn) {
+                    playBtn.textContent = 'Resume';
+                }
+            }
+        }
+
+        function stopAudio(index) {
+            const player = cardPlayers[index];
+            const playBtn = document.getElementById(`play-${index}`);
+            if (player) {
+                const trim = trimBounds[index] || { start: 0 };
+                player.pause();
+                player.currentTime = trim.start;
+                updateCardTime(index);
+            }
+            if (playBtn) {
+                playBtn.textContent = 'Play';
+            }
+        }
+
+        function resetAudio(index) {
+            if (currentRecordingIndex === index) {
+                stopRecording();
+            }
+
+            const player = cardPlayers[index];
+            if (player) {
+                player.pause();
+            }
+            delete cardPlayers[index];
+            delete audioData[index];
+            delete audioMeta[index];
+            delete trimBounds[index];
+            delete waveformPeaks[index];
+            updateCardStatus(index, false);
+            const time = document.getElementById(`time-${index}`);
+            const playBtn = document.getElementById(`play-${index}`);
+            const startLabel = document.getElementById(`trim-start-label-${index}`);
+            const endLabel = document.getElementById(`trim-end-label-${index}`);
+            const selectedBar = document.getElementById(`trim-selected-${index}`);
+            const startHandle = document.getElementById(`trim-start-${index}`);
+            const endHandle = document.getElementById(`trim-end-${index}`);
+            const playhead = document.getElementById(`playhead-${index}`);
+
+            if (time) {
+                time.textContent = '0:00 / 0:00';
+            }
+            if (playBtn) {
+                playBtn.textContent = 'Play';
+            }
+            if (startLabel) {
+                startLabel.textContent = '0:00';
+            }
+            if (endLabel) {
+                endLabel.textContent = '0:00';
+            }
+            if (selectedBar) {
+                selectedBar.style.left = '0%';
+                selectedBar.style.width = '0%';
+            }
+            if (startHandle) {
+                startHandle.style.left = '0%';
+            }
+            if (endHandle) {
+                endHandle.style.left = '0%';
+            }
+            if (playhead) {
+                playhead.style.left = '0%';
+            }
+
+            drawWaveform(index);
+        }
+
+        document.getElementById('exportIndividual').addEventListener('click', async () => {
+            const audios = getRecordedAudios();
+            const trims = getTrimPayload();
+            const hasAudio = audios.some(a => a !== null);
+            
+            if (!hasAudio) {
+                alert('Please record at least one sentence first.');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch('/api/export_individual', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audios, trims })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.error || 'Export failed');
+                    showLoading(false);
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'sentences_voice.zip';
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error exporting:', error);
+                alert('Error exporting audio');
+            }
+            showLoading(false);
+        });
+
+        function getRecordedAudios() {
+            return sentences.map((_, i) => {
+                const audio = audioData[i];
+                if (audio && typeof audio === 'string' && audio.length > 0) {
+                    return audio;
+                }
+                return null;
+            });
+        }
+
+        function getTrimPayload() {
+            return sentences.map((_, i) => {
+                const trim = trimBounds[i];
+                if (!trim) {
+                    return null;
+                }
+                return {
+                    start: Number(trim.start || 0),
+                    end: Number(trim.end || 0)
+                };
+            });
+        }
+
+        async function exportCombined(gap) {
+            const audios = getRecordedAudios();
+            const trims = getTrimPayload();
+            const hasAudio = audios.some(a => a !== null);
+            
+            if (!hasAudio) {
+                alert('Please record at least one sentence first.');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch('/api/export_combined', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audios, trims, gap })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.error || 'Export failed');
+                    showLoading(false);
+                    return;
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const gapStr = gap === 0 ? '0' : String(gap).replace('.', '');
+                a.download = `sentences_all_${gapStr}.wav`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Error exporting:', error);
+                alert('Error exporting audio');
+            }
+            showLoading(false);
+        }
+
+        async function previewCombined(gap) {
+            const audios = getRecordedAudios();
+            const trims = getTrimPayload();
+            const hasAudio = audios.some(a => a !== null);
+            
+            if (!hasAudio) {
+                alert('Please record at least one sentence first.');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch('/api/export_combined', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audios, trims, gap })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.error || 'Preview failed');
+                    showLoading(false);
+                    return;
+                }
+
+                const blob = await response.blob();
+                if (previewAudio) {
+                    previewAudio.pause();
+                }
+                if (previewAudioUrl) {
+                    window.URL.revokeObjectURL(previewAudioUrl);
+                }
+
+                previewAudioUrl = window.URL.createObjectURL(blob);
+                previewAudio = new Audio(previewAudioUrl);
+                previewPanel.classList.remove('hidden');
+
+                previewAudio.addEventListener('loadedmetadata', () => {
+                    previewSeek.min = '0';
+                    previewSeek.max = String(previewAudio.duration || 0);
+                    previewSeek.value = '0';
+                    previewTime.textContent = `${formatTime(0)} / ${formatTime(previewAudio.duration || 0)}`;
+                });
+
+                previewAudio.addEventListener('timeupdate', () => {
+                    previewSeek.value = String(previewAudio.currentTime || 0);
+                    previewTime.textContent = `${formatTime(previewAudio.currentTime || 0)} / ${formatTime(previewAudio.duration || 0)}`;
+                });
+
+                previewAudio.addEventListener('ended', () => {
+                    previewAudio.currentTime = 0;
+                    previewSeek.value = '0';
+                });
+
+                previewAudio.onerror = () => {
+                    alert('Error playing audio');
+                };
+
+                await previewAudio.play();
+            } catch (error) {
+                console.error('Error previewing:', error);
+                alert('Error previewing audio');
+            }
+            showLoading(false);
+        }
+
+        previewPlayBtn.addEventListener('click', async () => {
+            if (!previewAudio) {
+                return;
+            }
+            try {
+                await previewAudio.play();
+            } catch (error) {
+                alert('Unable to play preview.');
+            }
+        });
+
+        previewPauseBtn.addEventListener('click', () => {
+            if (previewAudio) {
+                previewAudio.pause();
+            }
+        });
+
+        previewStopBtn.addEventListener('click', () => {
+            if (previewAudio) {
+                previewAudio.pause();
+                previewAudio.currentTime = 0;
+                previewSeek.value = '0';
+                previewTime.textContent = `${formatTime(0)} / ${formatTime(previewAudio.duration || 0)}`;
+            }
+        });
+
+        previewSeek.addEventListener('input', () => {
+            if (previewAudio) {
+                previewAudio.currentTime = parseFloat(previewSeek.value || '0');
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            sentences.forEach((_, index) => {
+                if (audioData[index]) {
+                    drawWaveform(index);
+                    updateTrim(index);
+                }
+            });
+        });
+
+        document.getElementById('exportAll').addEventListener('click', async () => {
+            const audios = getRecordedAudios();
+            const trims = getTrimPayload();
+            const hasAudio = audios.some(a => a !== null);
+            
+            if (!hasAudio) {
+                alert('Please record at least one sentence first.');
+                return;
+            }
+
+            showLoading(true);
+            try {
+                const response = await fetch('/api/export_all', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ audios, trims })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    alert(error.error || 'Export failed');
+                    showLoading(false);
+                    return;
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    alert(`Exported successfully!\n\nFiles created:\n- ${data.files.join('\n- ')}`);
+                }
+            } catch (error) {
+                console.error('Error exporting:', error);
+                alert('Error exporting audio');
+            }
+            showLoading(false);
+        });
+
+        function showLoading(show) {
+            if (show) {
+                loadingOverlay.classList.add('active');
+            } else {
+                loadingOverlay.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>
